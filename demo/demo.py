@@ -6,10 +6,12 @@ import os
 import time
 import cv2
 import tqdm
+import json
 
 from detectron2.config import get_cfg
 from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
+from detectron2.evaluation.coco_evaluation import instances_to_coco_json
 
 from predictor import VisualizationDemo
 
@@ -62,6 +64,12 @@ def get_parser():
     return parser
 
 
+def save_prediction(prediction, img_id, filename):
+    result = instances_to_coco_json(prediction['instances'], img_id)
+    with open(f"{os.path.splitext(filename)[0]}.json", "w") as fw:
+        fw.write(json.dumps(result))
+
+
 if __name__ == "__main__":
     mp.set_start_method("spawn", force=True)
     args = get_parser().parse_args()
@@ -95,6 +103,7 @@ if __name__ == "__main__":
                 else:
                     assert len(args.input) == 1, "Please specify a directory with args.output"
                     out_filename = args.output
+                save_prediction(predictions, path, out_filename)
                 visualized_output.save(out_filename)
             else:
                 cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
